@@ -1,0 +1,7 @@
+# Never bake the local .env (it holds the API key) into the image.
+.env
+.venv
+__pycache__
+*.pyc
+.git
+.pytest_cache
