@@ -1,6 +1,9 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import app, settings
+
+settings.llm_api_key = ""
+
 
 client = TestClient(app)
 KEY = {"X-API-Key": "dev-only-change-me"}

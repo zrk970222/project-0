@@ -13,6 +13,8 @@ import uuid
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
+from .classifier_llm import classify_with_llm
+
 
 from .config import settings
 from .schemas import ClassifyRequest, ClassifyResponse, HealthResponse
@@ -94,14 +96,30 @@ def _heuristic_label(text: str) -> tuple[str, float]:
 
 @app.post("/v1/classify", response_model=ClassifyResponse)
 def classify(body: ClassifyRequest, _: str = Depends(verify_api_key)) -> ClassifyResponse:
-    label, confidence = _heuristic_label(body.text)
+    if settings.llm_api_key:
+        try:
+            label, confidence, model, _usage = classify_with_llm(
+                body.text,
+                api_key=settings.llm_api_key,
+                base_url=settings.llm_base_url,
+                model=settings.llm_model,
+                timeout=settings.llm_timeout,
+            )
+        except Exception:
+            logger.warning("llm classify failed, falling back to heuristic", exc_info=True)
+            label, confidence = _heuristic_label(body.text)
+            model = "local-heuristic-v0-fallback"
+    else:
+        label, confidence = _heuristic_label(body.text)
+        model = "local-heuristic-v0"
     logger.info("classify label=%s confidence=%.2f chars=%d", label, confidence, len(body.text))
     return ClassifyResponse(
         label=label,
         confidence=confidence,
-        model="local-heuristic-v0",
+        model=model,
         text_preview=body.text[:80],
     )
+
 
 
 # TODO (Thu 2026-11-19): add a streaming endpoint, e.g. GET /v1/stream,
