@@ -1,0 +1,6 @@
+# 加到 .env 末尾：第二家厂商（百炼）只填这一次，以后不用再改 .env
+# 主厂商（PROJECT0_LLM_*，DeepSeek）保持不动，它挂了会自动切到下面这家
+
+PROJECT0_LLM2_API_KEY=把百炼按量付费那把key粘到这里（整段替换，不要留中文字）
+PROJECT0_LLM2_BASE_URL=https://ws-4aovgbsjvezipp09.cn-beijing.maas.aliyuncs.com/compatible-mode/v1
+PROJECT0_LLM2_MODEL=qwen-plus

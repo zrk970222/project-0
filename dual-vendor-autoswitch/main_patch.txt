@@ -1,0 +1,21 @@
+# main.py 改两处（2026-11-24 已由助手远程改好，本文件留档对照）：
+#
+# 【1】import 区：把
+#   from .classifier_llm import classify_with_llm
+# 换成
+#   from .classifier_chain import classify_auto
+#
+#
+# 【2】classify 函数里，把原来的 if settings.llm_api_key: ... try 段
+# 换成下面这段（else 分支和 return 部分保持原样不动）：
+
+    if settings.llm_api_key or settings.llm2_api_key:
+        try:
+            label, confidence, model, _usage = classify_auto(body.text)
+        except Exception:
+            logger.warning("all llm providers failed, falling back to heuristic", exc_info=True)
+            label, confidence = _heuristic_label(body.text)
+            model = "local-heuristic-v0-fallback"
+    else:
+        label, confidence = _heuristic_label(body.text)
+        model = "local-heuristic-v0"

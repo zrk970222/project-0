@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app, settings
 
 settings.llm_api_key = ""
+settings.llm2_api_key = ""
 
 
 client = TestClient(app)

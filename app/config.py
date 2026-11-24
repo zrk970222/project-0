@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-4o-mini"
     llm_timeout: float = 15.0
 
+    # --- second vendor / auto-switch (2026-11-24) ---
+    # Secondary vendor, tried automatically when the primary fails.
+    # Empty llm2_api_key = not configured, the chain skips it.
+    llm2_api_key: str = ""
+    llm2_base_url: str = ""
+    llm2_model: str = ""
+
     model_config = {"env_prefix": "PROJECT0_", "env_file": ".env"}
 
 

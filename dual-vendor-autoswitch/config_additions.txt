@@ -1,0 +1,9 @@
+# 在 app/config.py 里找到 llm_timeout 那一行，在它下面粘贴这 6 行
+# （注意：每行开头 4 个空格，和 llm_timeout 对齐，不要删改）
+
+    # --- second vendor / auto-switch (2026-11-24) ---
+    # Secondary vendor, tried automatically when the primary fails.
+    # Empty llm2_api_key = not configured, the chain skips it.
+    llm2_api_key: str = ""
+    llm2_base_url: str = ""
+    llm2_model: str = ""

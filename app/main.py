@@ -13,7 +13,7 @@ import uuid
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
-from .classifier_llm import classify_with_llm
+from .classifier_chain import classify_auto
 
 
 from .config import settings
@@ -96,17 +96,11 @@ def _heuristic_label(text: str) -> tuple[str, float]:
 
 @app.post("/v1/classify", response_model=ClassifyResponse)
 def classify(body: ClassifyRequest, _: str = Depends(verify_api_key)) -> ClassifyResponse:
-    if settings.llm_api_key:
+    if settings.llm_api_key or settings.llm2_api_key:
         try:
-            label, confidence, model, _usage = classify_with_llm(
-                body.text,
-                api_key=settings.llm_api_key,
-                base_url=settings.llm_base_url,
-                model=settings.llm_model,
-                timeout=settings.llm_timeout,
-            )
+            label, confidence, model, _usage = classify_auto(body.text)
         except Exception:
-            logger.warning("llm classify failed, falling back to heuristic", exc_info=True)
+            logger.warning("all llm providers failed, falling back to heuristic", exc_info=True)
             label, confidence = _heuristic_label(body.text)
             model = "local-heuristic-v0-fallback"
     else:
