@@ -11,9 +11,11 @@ import logging
 import time
 import uuid
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Security
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Security
+from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 from .classifier_chain import classify_auto
+from .streaming import stream_explanation
 
 
 from .config import settings
@@ -116,5 +118,29 @@ def classify(body: ClassifyRequest, _: str = Depends(verify_api_key)) -> Classif
 
 
 
-# TODO (Thu 2026-11-19): add a streaming endpoint, e.g. GET /v1/stream,
-# returning text/event-stream, to demo streaming vs. one-shot responses.
+def _heuristic_explanation(text: str) -> str:
+    """One-line local explanation, for the no-key / fallback path."""
+    label, confidence = _heuristic_label(text)
+    return f"本地规则判断为 {label}（置信度 {confidence:.2f}）：只数了关键词，没读整句意思。"
+
+
+@app.get("/v1/stream")
+def stream_explain(
+    text: str = Query(min_length=1, max_length=5000),
+    _: str = Depends(verify_api_key),
+):
+    """Stream a 1-2 sentence explanation of the text's sentiment, SSE.
+
+    Same vendor + key as /v1/classify (only .env changes vendors).
+    No key / vendor failure -> streams the local explanation instead.
+    """
+    fallback = _heuristic_explanation(text)
+    gen = stream_explanation(
+        text,
+        api_key=settings.llm_api_key,
+        base_url=settings.llm_base_url,
+        model=settings.llm_model,
+        timeout=settings.llm_timeout,
+        fallback_text=fallback,
+    )
+    return StreamingResponse(gen, media_type="text/event-stream")
